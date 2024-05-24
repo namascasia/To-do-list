@@ -2,8 +2,11 @@ import { useEffect, useState } from 'react';
 import './App.css';
 import { styles } from './stylesComponents.js';
 import {Container, Header, Button, Input, List, Checkbox, Select, Icon } from 'semantic-ui-react';
+import toast, { Toaster } from 'react-hot-toast';
 
 function App() {
+  const notify = () => toast.success('Updating task!');
+  const notifyRemove = () => toast.success('Deleting task!');
 
   const [tasks, setTasks] = useState(() => {
     const storedTasks = localStorage.getItem('tasks');
@@ -16,6 +19,12 @@ function App() {
   const [filter, setFilter] = useState('all');
   const [editingTaskId, setEditingTaskId] = useState(false);
 
+  const filterOptions = [
+    {key: 'all', value: 'all', text: 'All'},
+    {key: 'completed', value: 'completed', text: 'Completed'},
+    {key: 'pending', value: 'pending', text: 'Pending'}
+  ];
+  
   useEffect(() => {
     localStorage.setItem('tasks', JSON.stringify(tasks));
   }, [tasks]);
@@ -27,11 +36,6 @@ function App() {
     }
   }, []);
   
-  const filterOptions = [
-    {key: 'all', value: 'all', text: 'All'},
-    {key: 'completed', value: 'completed', text: 'Completed'},
-    {key: 'pending', value: 'pending', text: 'Pending'}
-  ]
   const addTask = () => {
     
     if(tasksInput.trim().length > 0 ) {
@@ -40,8 +44,28 @@ function App() {
     }
   }
 
+  const confirmRemove = (id) => {
+    toast((t) => (
+      <div>
+        <span>Do you want to delete this task?</span>
+        <div style={styles.confirmButton}>
+          <button style={styles.buttonRemove} onClick={() => {
+            removeTask(id);
+            toast.dismiss(t.id);
+          }}>
+            Yes
+          </button>
+          <button style={styles.buttonRemove} onClick={() => toast.dismiss(t.id)}>
+            No
+          </button>
+        </div>
+      </div>
+    ));
+  };
+
   const removeTask = (id) => {
     setTasks(tasks.filter(task => task.id !== id));
+    notifyRemove();
   }
 
   const toggleTask = (id) => {
@@ -77,6 +101,7 @@ function App() {
       }))
       setEditingTaskId(null);
     }
+    notify();
   }
 
 
@@ -131,7 +156,7 @@ function App() {
                   </div>
                   <div style={styles.icons}>
                     <Icon onClick={ () => updatedSearch(task.id)} name='edit outline' style={styles.itemIcon} />
-                    <Icon onClick={ () => removeTask(task.id)} name='trash alternate outline' style={styles.itemIcon} />
+                    <Icon onClick={ () => confirmRemove(task.id)} name='trash alternate outline' style={styles.itemIcon} />
                   </div>  
                 </List.Item>
               ))
@@ -139,6 +164,12 @@ function App() {
           </List>
         </div>
       </Container>
+      <div>
+        <Toaster
+          position="top-center"
+          reverseOrder={false}
+        />
+      </div>
     </>
   )
 }

@@ -5,6 +5,16 @@ export const styles = {
         color: 'white',
         webkitTextStroke: '1px #8e24b9',
     },
+    confirmButton:{
+        display: 'flex',
+        gap: '10px',
+        justifyContent: 'center',
+        marginTop: '10px'
+    },
+    buttonRemove:{
+        backgroundColor: '#B3B7EE',
+        color: 'white'
+    },
     item:{
         display: 'flex',
         justifyContent: 'space-between',
