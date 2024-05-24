@@ -2,7 +2,8 @@
 export const styles = {
     header:{
         fontSize: '2em',
-        color: '#A569BD'
+        color: 'white',
+        webkitTextStroke: '1px #8e24b9',
     },
     item:{
         display: 'flex',

@@ -1,15 +1,32 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import './App.css';
 import { styles } from './stylesComponents.js';
 import {Container, Header, Button, Input, List, Checkbox, Select, Icon } from 'semantic-ui-react';
 
 function App() {
-  const [tasks, setTasks] = useState([]);
+
+  const [tasks, setTasks] = useState(() => {
+    const storedTasks = localStorage.getItem('tasks');
+    if (storedTasks) return JSON.parse(storedTasks);
+    return [];
+  });
+
   const [tasksInput, setTasksInput] = useState('');
   const [tasksEditing, setEditing] = useState('');
   const [filter, setFilter] = useState('all');
   const [editingTaskId, setEditingTaskId] = useState(false);
 
+  useEffect(() => {
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+  }, [tasks]);
+
+  useEffect(() => {
+    const storedTasks = localStorage.getItem('tasks');
+    if (storedTasks) {
+      setTasks(JSON.parse(storedTasks));
+    }
+  }, []);
+  
   const filterOptions = [
     {key: 'all', value: 'all', text: 'All'},
     {key: 'completed', value: 'completed', text: 'Completed'},
