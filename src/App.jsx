@@ -1,12 +1,19 @@
 import { useEffect, useState } from 'react';
 import './App.css';
 import { styles } from './stylesComponents.js';
-import {Container, Header, Button, Input, List, Checkbox, Select, Icon } from 'semantic-ui-react';
+import {Container, Header, Button, Input, List, Select} from 'semantic-ui-react';
 import toast, { Toaster } from 'react-hot-toast';
+import { RowItem } from './components/RowItem/RowItem.jsx';
+
+const filterOptions = [
+  {key: 'all', value: 'all', text: 'All'},
+  {key: 'completed', value: 'completed', text: 'Completed'},
+  {key: 'pending', value: 'pending', text: 'Pending'}
+];
+const notify = () => toast.success('Updating task!');
+const notifyRemove = () => toast.success('Deleting task!');
 
 function App() {
-  const notify = () => toast.success('Updating task!');
-  const notifyRemove = () => toast.success('Deleting task!');
 
   const [tasks, setTasks] = useState(() => {
     const storedTasks = localStorage.getItem('tasks');
@@ -15,26 +22,7 @@ function App() {
   });
 
   const [tasksInput, setTasksInput] = useState('');
-  const [tasksEditing, setEditing] = useState('');
   const [filter, setFilter] = useState('all');
-  const [editingTaskId, setEditingTaskId] = useState(false);
-
-  const filterOptions = [
-    {key: 'all', value: 'all', text: 'All'},
-    {key: 'completed', value: 'completed', text: 'Completed'},
-    {key: 'pending', value: 'pending', text: 'Pending'}
-  ];
-  
-  useEffect(() => {
-    localStorage.setItem('tasks', JSON.stringify(tasks));
-  }, [tasks]);
-
-  useEffect(() => {
-    const storedTasks = localStorage.getItem('tasks');
-    if (storedTasks) {
-      setTasks(JSON.parse(storedTasks));
-    }
-  }, []);
   
   const addTask = () => {
     
@@ -43,25 +31,6 @@ function App() {
       setTasksInput('');
     }
   }
-
-  const confirmRemove = (id) => {
-    toast((t) => (
-      <div>
-        <span>Do you want to delete this task?</span>
-        <div style={styles.confirmButton}>
-          <button style={styles.buttonRemove} onClick={() => {
-            removeTask(id);
-            toast.dismiss(t.id);
-          }}>
-            Yes
-          </button>
-          <button style={styles.buttonRemove} onClick={() => toast.dismiss(t.id)}>
-            No
-          </button>
-        </div>
-      </div>
-    ));
-  };
 
   const removeTask = (id) => {
     setTasks(tasks.filter(task => task.id !== id));
@@ -83,27 +52,69 @@ function App() {
     if(filter === 'pending') return tasks.filter(task => !task.completed);
   }
 
-  const updatedSearch = (id) => {
-    setEditingTaskId(id);
-    setEditing(tasks.find(task => task.id === id).description);
-  }
-
-  const updatedTask = (id) => {
-    const updatedTaskDescription = tasksEditing.trim();
+  const updatedTask = (id, newDescription) => {
     
-    if(updatedTaskDescription.length > 0){ 
+    if(newDescription.length > 0){ 
       setTasks(tasks.map(task => {
         if(task.id === id){
-          task.description = updatedTaskDescription;
+          task.description = newDescription;
           task.date = new Date().toLocaleString();
         }
         return task;
       }))
-      setEditingTaskId(null);
+      notify();
     }
-    notify();
   }
 
+  useEffect(() => {
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+  }, [tasks]);
+
+  useEffect(() => {
+    const storedTasks = localStorage.getItem('tasks');
+    if (storedTasks) {
+      setTasks(JSON.parse(storedTasks));
+    }
+  }, []);
+
+  const confirmRemove = (id) => {
+    toast((t) => (
+      <div>
+        <span>Do you want to delete this task?</span>
+        <div style={styles.confirmButton}>
+          <button style={styles.buttonRemove} onClick={() => {
+            removeTask(id);
+            toast.dismiss(t.id);
+          }}>
+            Yes
+          </button>
+          <button style={styles.buttonRemove} onClick={() => toast.dismiss(t.id)}>
+            No
+          </button>
+        </div>
+      </div>
+    ));
+  };
+
+  let taskList;
+
+  if (tasks.length) {
+    taskList = (
+      <List className='listTasks'> 
+        {
+          filterTasks(filter).map(task => (
+            <RowItem
+              key={task.id}
+              task={task}
+              toggleTask={toggleTask}
+              confirmRemove={confirmRemove}
+              updatedTask={updatedTask}
+            />
+          ))
+        }
+      </List>
+    );
+  }
 
   return (
     <>
@@ -131,37 +142,7 @@ function App() {
               <label className='title'>Tasks</label>
             )  
           }
-          <List className='listTasks'> 
-            {
-              filterTasks(filter).map(task => (
-                <List.Item key={task.id} style={styles.item}>
-                  <div style={styles.task}>
-                    <Checkbox checked={task.completed} onChange={() => toggleTask(task.id)} style={styles.checkbox}/>
-                    <div className='description-date'>
-                      {
-                        editingTaskId === task.id ? (
-                          <Input 
-                            value={tasksEditing}
-                            onChange={(e) => setEditing(e.target.value)}
-                            onKeyPress={(e) => e.key === 'Enter' && updatedTask(task.id)}
-                            action={<Button style={styles.save} onClick={() => updatedTask(task.id) }>Save</Button>}
-                          />
-                        ) 
-                        : (
-                          <label className={task.completed ? 'completed-task' : ''}>{task.description}</label>
-                        )
-                      }
-                      <label className='date'>{task.date}</label>
-                    </div>
-                  </div>
-                  <div style={styles.icons}>
-                    <Icon onClick={ () => updatedSearch(task.id)} name='edit outline' style={styles.itemIcon} />
-                    <Icon onClick={ () => confirmRemove(task.id)} name='trash alternate outline' style={styles.itemIcon} />
-                  </div>  
-                </List.Item>
-              ))
-            }
-          </List>
+          { taskList }
         </div>
       </Container>
       <div>
